@@ -1,0 +1,116 @@
+---
+title: "Sophie_Whikehart_DA241469_Code_Sample"
+author: "Sophie Whikehart"
+date: "2025-06-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# install libraries 
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(plotly)
+```
+
+1. **Malarai Case Dataset Creation:** Write a script to create a dataset that exclusively contains the number of malaria cases among males aged 6-11 months in Zambia, Zimbabwe, Mozambique and Malawi for the year 2021. 
+
+```{r}
+
+
+# read in the data 
+test_data <- read.csv("data/test-data.csv")
+
+# filter for relevant columns 
+malaria_cases_2021 <- test_data %>%
+  filter(
+    cause_name == "Malaria",
+    sex == "Male",
+    age_group_name == "6-11 months",
+    location_name %in% c("Zambia", "Zimbabwe", "Mozambique", "Malawi"),
+    year == 2021,
+    metric == "Number"
+  ) %>%
+  select(location_name, year, sex, age_group_name, cause_name, measure, metric, value, lower, upper)
+
+print(malaria_cases_2021)
+
+#write csv file of new dataset
+write.csv(malaria_cases_2021, "data/malaria_cases_male_6_11_2021.csv")
+```
+
+2. Trend Analysis Plot: Develop a script to create a plot that compares the trend of malaria cases from 2000 to 2021 among males aged 6-11 months in Zambia, Zimbabwe, Mozambique and Malawi 
+
+```{r}
+
+# filter data for malaria cases from 2000 to 2021 among males aged 6 - 11 months in Zambia, Zimbabwe, Mozambique and Malawi
+malaria_cases_male_6_11_2000_2021 <- test_data %>%
+  filter(
+    cause_name == "Malaria",
+    sex == "Male",
+    age_group_name == "6-11 months",
+    location_name %in% c("Zambia", "Zimbabwe", "Mozambique", "Malawi"),
+    year >= 2000 & year <= 2021,
+    metric == "Number"
+  ) %>%
+  select(location_name, year, sex, age_group_name, cause_name, measure, metric, value, lower, upper)
+
+# create a trend analysis plot 
+plot <- ggplot(malaria_cases_male_6_11_2000_2021, 
+               aes(x = year, y = value, group = location_name)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = location_name), alpha = 0.2, color = NA) +
+  geom_line(aes(color = location_name), linewidth = 1) +
+  labs(
+    title = "Trend of Malaria Cases in Males Aged 6–11 Months (2000–2021) for\nZambia, Zimbabwe, Mozambique, and Malawi",
+    x = "Year",
+    y = "Number of Malaria Cases",
+    color = "Country",
+    fill = "Country"  
+  ) +
+  theme(
+    plot.title = element_text(size = 10),
+    legend.title = element_text(size = 9),
+    legend.text = element_text(size = 8)
+  )
+
+# static plot
+plot
+
+# show interactive plot
+interactive_malaria <- ggplotly(plot)
+interactive_malaria
+```
+3. **Malaria Prevalence Estimation**: Using the population.csv and draws.csv data sets (draws are samples, or possible values of the statistic being estimated), to provide a single estimate of the prevalence of malaria in 2021 for males aged 6-11 months across Zambia, Zimbabwe, Mozambique, and Malawi, including 95% uncertainty intervals 
+
+```{r}
+
+# read in the data 
+population <- read.csv("data/populations.csv")
+draws <- read.csv("data/draws.csv")
+
+# merge data sets 
+merged <- draws %>%
+  left_join(
+    population %>% select(age_group_id, location_id, sex_id, year_id, population),
+    by = c("age_group_id", "location_id", "sex_id", "year_id")
+  )
+
+
+# gets draws column 
+draw_cols <- grep("^draw_" , names(merged), value = TRUE)
+
+# calculate weighted prevalence for each draw 
+weighted_prevalence <- sapply(draw_cols, function(draw_col) {
+  sum(merged[[draw_col]] * merged$population, na.rm = TRUE) / sum(merged$population, na.rm = TRUE)
+})
+
+# summarize the weighted prevalence draws 
+mean_prev <- mean(weighted_prevalence)
+lower_95 <- quantile(weighted_prevalence, probs = 0.025)
+upper_95 <- quantile(weighted_prevalence, probs = 0.975)
+
+cat("Malaria prevalence of males aged 6-11 months during 2021 across Zambia, Zimbabwe, Mozambique, and Malawi):\n")
+cat(sprintf("Mean: %.4f\n95%% CI: %.4f - %.4f\n", mean_prev, lower_95, upper_95))
+```

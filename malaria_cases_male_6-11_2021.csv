@@ -1,0 +1,5 @@
+"","location_name","year","sex","age_group_name","cause_name","measure","metric","value","lower","upper"
+"1","Malawi",2021,"Male","6-11 months","Malaria","prevalence","Number",20882.2843522019,10536.1701112411,38948.9684476376
+"2","Mozambique",2021,"Male","6-11 months","Malaria","prevalence","Number",63252.3951934704,44321.6395350295,85631.3618773408
+"3","Zambia",2021,"Male","6-11 months","Malaria","prevalence","Number",17310.1390474701,9891.43375799689,25045.9499666187
+"4","Zimbabwe",2021,"Male","6-11 months","Malaria","prevalence","Number",1391.36357000063,1024.11404858838,1837.69189178124
